@@ -171,6 +171,8 @@ type Program struct {
 	// packages.  It contains all Imported initial packages, but not
 	// Created ones, and all imported dependencies.
 	importMap map[string]*types.Package
+
+	importer *importer
 }
 
 // PackageInfo holds the ASTs and facts derived by the type-checker
@@ -500,7 +502,6 @@ func (conf *Config) Load() (*Program, error) {
 		importMap:   make(map[string]*types.Package),
 		AllPackages: make(map[*types.Package]*PackageInfo),
 	}
-
 	imp := importer{
 		conf:     conf,
 		prog:     prog,
@@ -509,7 +510,13 @@ func (conf *Config) Load() (*Program, error) {
 		start:    time.Now(),
 		graph:    make(map[string]map[string]bool),
 	}
+	prog.importer = &imp // xxx
+	return conf.LoadWith(prog)
+}
 
+// LoadWith :
+func (conf *Config) LoadWith(prog *Program) (*Program, error) {
+	imp := prog.importer
 	// -- loading proper (concurrent phase) --------------------------------
 
 	var errpkgs []string // packages that contained errors
